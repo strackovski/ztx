@@ -11,7 +11,7 @@ TBD
 Run:
 
 ```bash
-git clone git@github.com/strackovski/ztx
+git clone git@github.com:strackovski/ztx
 go mod verify
 go run read.go
 ```
