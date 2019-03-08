@@ -27,6 +27,8 @@ var eth []string
 // ethChunks is a slice of chunked Ethereum address slices
 var ethChunks [][]string
 
+var failure int
+
 // init runs first to initialise raw data
 func init() {
     log.Printf("Reading Ethereum addresses from data file '%s'...\n", ethDataFile)
@@ -61,8 +63,14 @@ func call(url, data string) string {
     resp, err := http.Get(fmt.Sprintf(url, data))
 
     if err != nil {
+        failure++
         log.Printf("An error occured while calling URL '%s': %s\n", url, err)
     }
+
+    if resp.StatusCode != 200 {
+        failure++
+    }
+
     body, _ := ioutil.ReadAll(resp.Body)
     resp.Body.Close()
 
@@ -75,6 +83,7 @@ func main() {
     // Set max proc (arbitrary atm), and initial address count.
     runtime.GOMAXPROCS(10)
     ethAddressCount := 0
+    failure = 0
 
     log.Println("Starting timer and wait group...")
     wg := sync.WaitGroup{} // Make sure to wait for all routines to finish
@@ -93,9 +102,10 @@ func main() {
         }
     }
 
-    wg.Wait() // Ensure all routines finish before returning
+    wg.Wait()                    // Ensure all routines finish before returning
     elapsed := time.Since(start) // Measure elapsed time since starting the timer
 
     log.Println("================")
+    log.Printf("Success / failure (rate): %d / %d (%d)", 200 - failure, failure, 200 / failure)
     log.Printf("Reading %d ETH wallets took %s", ethAddressCount, elapsed)
 }
